@@ -40,8 +40,6 @@ public class WhatsappFragment extends Fragment {
     FirebaseDatabase mDatabase;
     FirebaseUser user;
 
-
-
     @BindView(R.id.etMessage)
     EditText etMessage;
     @BindView(R.id.btnSend)
@@ -50,11 +48,6 @@ public class WhatsappFragment extends Fragment {
     RecyclerView rvChat;
     Unbinder unbinder;
 
-    public WhatsappFragment() {
-        // Required empty public constructor
-    }
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -62,17 +55,12 @@ public class WhatsappFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_whatsapp, container, false);
         unbinder = ButterKnife.bind(this, view);
 
-        //TODO: discussed sharedInstance
+        //TODO: discuss sharedInstance.
         mDatabase = FirebaseDatabase.getInstance();
-        user= FirebaseAuth.getInstance().getCurrentUser();
+        user = FirebaseAuth.getInstance().getCurrentUser();
 
-//        readFromDb();
-//        readOnce();
-        readIncremental();
-
+        setupRecycler();
         return view;
-
-
     }
 
     @Override
@@ -84,48 +72,51 @@ public class WhatsappFragment extends Fragment {
     @OnClick(R.id.btnSend)
     public void onBtnSendClicked() {
         String text = etMessage.getText().toString();
-       if (TextUtils.isEmpty(text))return;
+        if(TextUtils.isEmpty(text))return;
 
-        //reference to a table MyCoolChat
-       // DatabaseReference chatTable = mDatabase.getReference("MyCoolChat");
+//        //reference to a Table MyCoolChat
+//        DatabaseReference chatTable = mDatabase.getReference("MyCoolChat");
+//
+//        //add a new Record: and get a reference to the new Record:
+//        DatabaseReference currentRow = chatTable.push();
+//
+//        //set the value:
+//        currentRow.setValue(text);
 
-        //add a new record and get reference to the new record
-       // DatabaseReference currentRow = chatTable.push();
-
-        //set the value
-        //currentRow.setValue(text);
 
         mDatabase.getReference("Chat").push().setValue(text);
 
         etMessage.setText(null);
     }
 
-    private void setupRecycler(){
+
+    private void setupRecycler() {
         ChatAdapter adapter = new ChatAdapter(mDatabase.getReference("Chat"));
         rvChat.setAdapter(adapter);
         rvChat.setLayoutManager(new LinearLayoutManager(getContext()));
     }
-    private void  readFromDb(){
 
-        //1.get a ref to the table
+
+    private void readFromDb(){
+        //1) get a ref to the table.
         DatabaseReference chatRef = mDatabase.getReference("Chat");
-        //2.add a listener to the table
+        //final List<String> items = new ArrayList<>();
+        //2) add a listener to the table
 
-        //get the table at the begining
-        //and each time the data changes - get all the table again
 
+
+        //get the table at the beginning
+        //AND each time the data changes - GET ALL THE TABLE AGAIN.
         chatRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Iterable<DataSnapshot> rows = dataSnapshot.getChildren();
-                for (DataSnapshot row : dataSnapshot.getChildren()){
+
+                for (DataSnapshot row : rows) {
                     String text = row.getValue(String.class);
-
-                    Toast.makeText(getContext(), text,Toast.LENGTH_SHORT).show();
-
-
+                    // items.add(text);
+                    Toast.makeText(getContext(), text, Toast.LENGTH_SHORT).show();
                 }
-
             }
 
             @Override
@@ -133,55 +124,40 @@ public class WhatsappFragment extends Fragment {
 
             }
         });
-
-
-        chatRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
     }
-    private void readOnce(){
-        //get a reference to the table
-        //add a listener
 
-        //get the data once froom the server . not updating unless we run the query again
+
+    private void readOnce(){
+        //get a reference to the table.
+        //add a listener.
+
+        //Get the data once from the server. Not updating unless we run the query again.
         mDatabase.getReference("Chat").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot row : dataSnapshot.getChildren()){
-                    String text = row.getValue(String.class);
-
-                    Toast.makeText(getContext(), text,Toast.LENGTH_SHORT).show();
-
-
+                for (DataSnapshot row : dataSnapshot.getChildren()) {
+                    Toast.makeText(getContext(), row.getValue(String.class), Toast.LENGTH_SHORT).show();
                 }
-
-
             }
-
             @Override
             public void onCancelled(DatabaseError databaseError) {
 
             }
         });
     }
+
+
     private void readIncremental(){
+
+
         mDatabase.getReference("Chat").addChildEventListener(new ChildEventListener() {
+
+            //Once get all the table:
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                //Once get all the table
+            public void onChildAdded(DataSnapshot dataSnapshot, String key) {
+                //Once get all the table:
                 String text = dataSnapshot.getValue(String.class);
                 Toast.makeText(getContext(), text, Toast.LENGTH_SHORT).show();
-
                 //once a new item is added we will only get the new child
             }
 
@@ -207,25 +183,23 @@ public class WhatsappFragment extends Fragment {
         });
     }
 
-    static  class  ChatAdapter extends FirebaseRecyclerAdapter<String,ChatAdapter.ChatViewHolder{
 
-        public  ChatAdapter (Query ref){
-            super(String.class , R.layout.chat_item , ChatViewHolder.class, ref);
+    static class ChatAdapter extends FirebaseRecyclerAdapter<String, ChatAdapter.ChatViewHolder>{
+        public ChatAdapter(Query ref) {
+            super(String.class, R.layout.chat_item, ChatViewHolder.class, ref);
         }
         @Override
-        protected void populateViewHolder(ChatViewHolder v , String text, int position) {
+        protected void populateViewHolder(ChatViewHolder v, String text, int position) {
             v.tvChat.setText(text);
         }
-
-        public static class ChatViewHolder extends  RecyclerView.ViewHolder{
+        public static class ChatViewHolder extends RecyclerView.ViewHolder {
             TextView tvChat;
 
             public ChatViewHolder(View itemView) {
                 super(itemView);
-                tvChat = (TextView)itemView.findViewById(R.id.tvChat);
+                tvChat = (TextView) itemView.findViewById(R.id.tvChat);
             }
         }
 
     }
-
 }
