@@ -13,32 +13,30 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-
-import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.common.Scopes;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import hagai.edu.firebasedatabase.models.User;
+
 public class MainActivity extends AppCompatActivity {
     //properties:
-   private FirebaseAuth mAuth;
-   private FirebaseDatabase mDatabase;
-   private FirebaseUser user;
+    private FirebaseAuth mAuth;
+    private FirebaseDatabase mDatabase;
+    private FirebaseUser user;
 
     private static final int RC_SIGN_IN = 1;
-
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -57,35 +55,60 @@ public class MainActivity extends AppCompatActivity {
     FirebaseAuth.AuthStateListener mAuthListener = new FirebaseAuth.AuthStateListener() {
         @Override
         public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-             user = firebaseAuth.getCurrentUser();
+
+            user = firebaseAuth.getCurrentUser();
             if (user == null){
-
                 List<AuthUI.IdpConfig> providers = Arrays.asList(
-                 new AuthUI.IdpConfig.
-                        Builder(AuthUI.GOOGLE_PROVIDER).
-                        setPermissions(
-                                Arrays.asList(Scopes.PROFILE, Scopes.EMAIL)
-                        ).build(),
-
-                 new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build());
-
-
+                        new AuthUI.IdpConfig.
+                                Builder(AuthUI.GOOGLE_PROVIDER).
+                                setPermissions(
+                                        Arrays.asList(Scopes.PROFILE, Scopes.EMAIL)
+                                ).build(),
+                        new AuthUI.IdpConfig.
+                                Builder(AuthUI.EMAIL_PROVIDER).
+                                build(),
+                       new AuthUI.IdpConfig.
+                        Builder(AuthUI.FACEBOOK_PROVIDER).
+                        build());
 
                 Intent intent = AuthUI.
                         getInstance().
-                        createSignInIntentBuilder().
-                        setProviders(providers).build();
-
+                        createSignInIntentBuilder().setLogo(R.drawable.com_facebook_button_login_logo).
+                        setAvailableProviders(providers).build();
                 startActivityForResult(intent, RC_SIGN_IN);
             }
-
         }
     };
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_SIGN_IN){
+            IdpResponse idpResponse = IdpResponse.fromResultIntent(data);
+
+
+            if (resultCode == RESULT_OK){
+                //0) create a user
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                //convert it to a user:
+                User user = new User(currentUser);
+
+                //save the user
+                //1) ref the table.
+                DatabaseReference ref = FirebaseDatabase.getInstance().
+                        getReference("Users").child(user.getUid());
+                //2) push()... setValue
+                ref.setValue(user);
+
+            }// //else if(idpResponse!=null && idpResponse.getError)
+        }
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         mAuth.addAuthStateListener(mAuthListener);
+
     }
 
     @Override
@@ -98,9 +121,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mAuth = FirebaseAuth.getInstance();
         mDatabase = FirebaseDatabase.getInstance();
-
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -114,15 +137,6 @@ public class MainActivity extends AppCompatActivity {
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
     }
 
@@ -141,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         switch (id) {
             case R.id.action_settings:
                 return true;
@@ -153,11 +166,6 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-
-
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -165,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private static class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+        SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
@@ -173,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            switch (position) {
+            switch (position){
                 case 0:
                     return new WhatsappFragment();
                 default:
@@ -201,3 +209,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 }
+
+
+//"C:\Program Files\Java\jdk1.8.0_131\bin\keytool" -exportcert -alias AndroidDebugKey -keystore %HOMEPATH%\.android\debug.keystore | "C:\Users\Hagai Zamir\Desktop\openssl\bin\openssl" sha1 -binary | "C:\Users\Hagai Zamir\Desktop\openssl\bin\openssl" base64
