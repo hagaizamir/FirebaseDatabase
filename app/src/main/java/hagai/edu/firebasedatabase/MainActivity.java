@@ -184,6 +184,9 @@ public class MainActivity extends AppCompatActivity {
             switch (position){
                 case 0:
                     return new WhatsappFragment();
+                case  1:
+                    return  new ShoppingListFragment();
+
                 default:
                     return new Fragment();
             }
@@ -201,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                 case 0:
                     return "Chat";
                 case 1:
-                    return "SECTION 2";
+                    return "Shopping Lists";
                 case 2:
                     return "SECTION 3";
             }
