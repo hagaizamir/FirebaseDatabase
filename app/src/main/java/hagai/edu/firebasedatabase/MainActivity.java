@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
                 case 1:
                     return "Shopping Lists";
                 case 2:
-                    return "SECTION 3";
+                    return "Blank";
             }
             return null;
         }
