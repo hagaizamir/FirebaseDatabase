@@ -34,7 +34,7 @@ public class ShoppingListItemFragment extends DialogFragment {
     FloatingActionButton fabAddProduct;
     @BindView(R.id.etProductName)
     EditText etProductName;
-    @BindView(R.id.shoppingList)
+    @BindView(R.id.rvProducts)
     RecyclerView rvProducts;
     Unbinder unbinder;
 
